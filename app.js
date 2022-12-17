@@ -5,4 +5,4 @@ http.createServer(function (req, res) {
   res.write('Hello World!'); //write a response to the client
   res.end(); //end the response
 }).listen(80);
-console.log('http listen on :80');
+console.log('Server running on port 80.');
