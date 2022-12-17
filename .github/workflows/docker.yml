@@ -23,6 +23,7 @@ jobs:
           FROM debian:stable
           ARG DEBIAN_FRONTEND=noninteractive
           ARG DEBCONF_NOWARNINGS="yes"
+          COPY webmin.sh /usr/local/bin/
           RUN echo root:pass | chpasswd && \
           apt-get update -yq && apt-get -yq install --no-install-recommends curl ca-certificates wget gnupg && wget http://www.webmin.com/jcameron-key.asc && apt-key add jcameron-key.asc && echo "deb http://download.webmin.com/download/repository sarge contrib" >> /etc/apt/sources.list && \
           echo "deb http://webmin.mirror.somersettechsolutions.co.uk/repository sarge contrib" >> /etc/apt/sources.list && \
@@ -38,7 +39,7 @@ jobs:
           EXPOSE 10000
 
           VOLUME ["/etc/webmin"]
-
+          ENTRYPOINT [ "/usr/local/bin/webmin.sh" ]
           EOF
       #- name: Login to DockerHub
       #  uses: docker/login-action@v1
