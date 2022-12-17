@@ -20,26 +20,13 @@ jobs:
       - name: Build image
         run: |
           docker build -t docker-webmin:latest -f- . <<EOF
-          FROM debian:stable
-          ARG DEBIAN_FRONTEND=noninteractive
-          ARG DEBCONF_NOWARNINGS="yes"
-          COPY webmin.sh /usr/local/bin/
+          FROM debian:buster
           RUN echo root:pass | chpasswd && \
-          apt-get update -yq && apt-get -yq install --no-install-recommends curl ca-certificates wget gnupg && wget http://www.webmin.com/jcameron-key.asc && apt-key add jcameron-key.asc && echo "deb http://download.webmin.com/download/repository sarge contrib" >> /etc/apt/sources.list && \
-          echo "deb http://webmin.mirror.somersettechsolutions.co.uk/repository sarge contrib" >> /etc/apt/sources.list && \
-          apt-get -yq update && \
-          apt-get install -yq webmin && \
-          apt-get clean && \
-          touch /var/webmin/miniserv.log && \
-          sed -i s/ssl=1/ssl=0/g /etc/webmin/miniserv.conf && \
-          service webmin start
-          
-          ENV LC_ALL C.UTF-8
+          apt-get update -yq && apt-get -yq install --no-install-recommends curl ca-certificates wget gnupg ssh && \
+          mkdir /root/.ssh && echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDq/DEjAuFKK2hCpP58oNcc/NB8phiJJvftNpVKmsTfPKs4fFhOFm2m3xptertcZQ8V5orOCJFtSZPJSLqzpzCGJN2FdHWbgoiAtDepypTjqeY5CF7A5LIIKVDH2JQEpMDmQg7Q8Ui1QESW2q7c6rLtylEwP8J0o6bY4RiGkh+qTXqTQB6Ev95Gy0wxVaWDpjmAIoRI+pDQdpEcK/gMkazdlBeOJF0byN69D71HXBOt8dByyRsclNOEZuIqfQdOV8/yYebrVkpGSpwp3J2HGWDs51zGi7j+lvPJICtWq/E8MRcgf95vyKbwIvIXG2CQAUVlqK+u20HXExPRVlCuvfej root@localhost" >> /root/.ssh/authorized_keys && service sshd restart
+          EXPOSE 22
 
-          EXPOSE 10000
-
-          VOLUME ["/etc/webmin"]
-          ENTRYPOINT [ "/usr/local/bin/webmin.sh" ]
+          VOLUME ["/root"]
           EOF
       #- name: Login to DockerHub
       #  uses: docker/login-action@v1
