@@ -1,8 +1,15 @@
-var http = require('http');
+const express = require("express");
+const app = express();
 
-//create a server object:
-http.createServer(function (req, res) {
-  res.write('Hello World!'); //write a response to the client
-  res.end(); //end the response
-}).listen(80);
-console.log('Server running on port 80.');
+function startWithRetry() {
+    app.listen(8080, () => {
+      app.get("/", (req, res, next) => {
+        res.sendStatus(200)
+        res.end('OK')
+        return;
+      });
+      console.log("Server running on port 8080.");
+    });
+}
+
+startWithRetry();
