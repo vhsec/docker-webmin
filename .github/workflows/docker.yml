@@ -20,18 +20,43 @@ jobs:
       - name: Build image
         run: |
           docker build -t docker-webmin:latest -f- . <<EOF
-          FROM debian:buster
-          WORKDIR /root
-          COPY app.js /root
-          COPY package.json /root
-          RUN echo root:pass | chpasswd && \
-          apt-get update -yq && apt-get -yq install --no-install-recommends nodejs npm curl ca-certificates wget gnupg ssh && \
-          mkdir /root/.ssh && echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDq/DEjAuFKK2hCpP58oNcc/NB8phiJJvftNpVKmsTfPKs4fFhOFm2m3xptertcZQ8V5orOCJFtSZPJSLqzpzCGJN2FdHWbgoiAtDepypTjqeY5CF7A5LIIKVDH2JQEpMDmQg7Q8Ui1QESW2q7c6rLtylEwP8J0o6bY4RiGkh+qTXqTQB6Ev95Gy0wxVaWDpjmAIoRI+pDQdpEcK/gMkazdlBeOJF0byN69D71HXBOt8dByyRsclNOEZuIqfQdOV8/yYebrVkpGSpwp3J2HGWDs51zGi7j+lvPJICtWq/E8MRcgf95vyKbwIvIXG2CQAUVlqK+u20HXExPRVlCuvfej root@localhost" >> /root/.ssh/authorized_keys && service ssh restart
-          RUN npm install
-          EXPOSE 80
+FROM ghcr.io/linuxserver/baseimage-alpine:3.16
 
-          VOLUME ["/root"]
-          CMD ["npm", "start"]
+# set version label
+ARG BUILD_DATE
+ARG VERSION
+ARG OPENSSH_RELEASE
+LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+LABEL maintainer="aptalca"
+
+RUN \
+  echo "**** install runtime packages ****" && \
+  apk add --no-cache --upgrade \
+    logrotate \
+    nano \
+    netcat-openbsd \
+    sudo && \
+  echo "**** install openssh-server ****" && \
+  if [ -z ${OPENSSH_RELEASE+x} ]; then \
+    OPENSSH_RELEASE=$(curl -sL "http://dl-cdn.alpinelinux.org/alpine/v3.16/main/x86_64/APKINDEX.tar.gz" | tar -xz -C /tmp && \
+    awk '/^P:openssh-server-pam$/,/V:/' /tmp/APKINDEX | sed -n 2p | sed 's/^V://'); \
+  fi && \
+  apk add --no-cache \
+    openssh-client==${OPENSSH_RELEASE} \
+    openssh-server-pam==${OPENSSH_RELEASE} \
+    openssh-sftp-server==${OPENSSH_RELEASE} && \
+  echo "**** setup openssh environment ****" && \
+  sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config && \
+  usermod --shell /bin/bash abc && \
+  rm -rf \
+    /tmp/*
+
+# add local files
+#COPY /root /
+
+EXPOSE 2222
+
+VOLUME /config
           EOF
       #- name: Login to DockerHub
       #  uses: docker/login-action@v1
